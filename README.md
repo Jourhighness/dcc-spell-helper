@@ -1,5 +1,7 @@
 # ddc-spell-helper
 
+## General
+
 This is a macro generator for importing spells to Foundry VTT. 
 
 Requirements: You need to have the EasyTable by Blitz module installed and activated. 
@@ -11,8 +13,15 @@ Requirements: You need to have the EasyTable by Blitz module installed and activ
 
 Expected result: All tables will be created then imported to your compendium as well. The main RollTable description for the spell will receive the nice formatting from Christian Ovseniks guide. With all tables linked.
 
+
+## Good to know
+
 OBS there is probably A LOT of bugs to sort out yet. This is a very untested version. If it only partially works delete all tables in Roll Tables section and possibly in your compendium and try again :slight_smile: i will test it further during the week and sort out more bugs. I'm certain that some spells wont work due to the formatting. 
 
 Warning! Spamming the macro will potentially create a lot of RollTables.
 
-Future: It will create a actual spell-item as well
+Future: It will create a actual spell-item as well.
+
+## Known bugs
+
+Sometimes the range of the dice is not properly recognized and can result i a table without a range.
