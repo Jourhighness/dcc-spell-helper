@@ -20,8 +20,9 @@ OBS there is probably A LOT of bugs to sort out yet. This is a very untested ver
 
 Warning! Spamming the macro will potentially create a lot of RollTables.
 
-Future: It will create a actual spell-item as well.
-
 ## Known bugs
 
 Sometimes the range of the dice is not properly recognized and can result i a table without a range.
+
+## Future
+Future: Bug fixes & it will create a actual spell-item as well.
