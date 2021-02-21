@@ -1,4 +1,4 @@
-# ddc-spell-helper
+# dcc-spell-helper
 
 ## General
 
