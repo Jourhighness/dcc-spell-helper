@@ -1,0 +1,286 @@
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<script>
+
+var compendiumName = "dcc-spell-tables";
+var spellname;
+var level;
+var range;
+var duration;
+var castingtime;
+var save;
+var page;
+var description;
+//name, match filter, replace filter
+let potentialRollTables = [["Manifestation",
+                /\nManifestation.+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
+                /.*Manifestation.*/gi], 
+              ["Corruption",
+              /\nCorruption .+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
+              /.*Corruption.*/gi],
+              ["Misfire",
+              /\nMisfire .+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
+              /.*Misfire.*/gi]];
+let mainSpell = [/(\n1 Lost, failure, and worse|\n1 Failure|\n1 Fail).*$/gims,/^\s+|\s+$/g]
+let macro_output;
+
+var input_txt;
+var output_txt;
+    
+    let regExpTest = [
+                        [/.*[A-Z]*(\(Order \#[0-9]*\))/g,''],
+                        [/w*(Page [0-9]*)/g, ''],
+                        [/\n/g, ' '],
+                        [/.*[A-Z]*(\(Order \#[0-9]*\))/g,''],
+                        [/(Level: [0-9]+)/g, "\n$&"],
+                        [/(General)(\W*)([A-Z]*)/g,"\n\n$1\n$3"], 
+                        [/(Manifestation Roll [0-9]*d[0-9]*:)/g,"\n\n$1"],
+                        [/(Corruption Roll [0-9]*d[0-9]*:)/g,"\n\n$1"], 
+                        [/(Misfire Roll [0-9]*d[0-9]*:)/g,"\n\n$1"], 
+                        [/((\.[ ])(1{1}\W+Lost))/g,"$2\n\n$3"], 
+                        [/(\.+[ ]+)(([0-9]+-[0-9]+\W+)|([0-9]+\++))/g,"$1\n\n$2"], 
+                        [/(\([0-9]+-[0-9]+\))|(\([0-9]+\+*\)+)/g,"\n$1$2"],
+                        [/(\()([0-9]+\+*)(\))/g,"$2"],
+                        [/(\()([0-9]+\-*[0-9]+)(\))/g,"$2"],
+                    ]
+
+ $(document).ready(function () {     
+        $("#btn_convert").click(function () { 
+            cleanuptext($("#txta_input").val());
+        }); 
+        $("#btn_convert_macro").click(function () { 
+            generatemacro($("#txta_output").val());
+        }); 
+}); 
+
+function cleanuptext(text)
+{
+    if(text.match(/w*Page ([0-9]*)/g) != null){
+        page = text.match(/w*Page ([0-9]*)/g)[0];
+        page = page.replace("Page", "").trim();
+    }
+    regExpTest.forEach(element => {
+        text = text.replace(element[0], element[1]);
+    });
+
+    var fistres = text.match(/(\n)(1 Lost, failure, and worse|\n1 Failure|\n1 Fail)(.+\n[\s\S]*?(?<=\n.*\n\n|$))/gi)[0];
+    if(fistres != null){
+        fistres = fistres.replace(/\n/g, '');
+        fistres = "\n\n" + fistres + "\n\n";
+        text = text.replace(/(\n)(1 Lost, failure, and worse|\n1 Failure|\n1 Fail)(.+\n[\s\S]*?(?<=\n.*\n\n|$))/gi, fistres);
+    }
+    
+    $("#txta_output").val(text);
+    
+    state = 2;
+}
+function generatemacro(text)
+{
+    /*
+    Level: 3 Range: Touch Duration: Instantaneous Casting time: 1 round Save: See below 
+    */
+    var compendiumName = $("#txt_compendiumName").val().trim();
+    var spellname = text.match(/^(.*)$/m)[1].trim();
+    var level = text.match(/\nLevel\: ([0-9])+/mi)[1];
+    var range = text.match(/Range\:[ ]+(.+)[ ]+(Duration)/mi)[1];
+    var duration = text.match(/Duration\:[ ]+(.+)[ ]+(Casting time)/mi)[1];
+    var castingtime = text.match(/Casting time\:[ ]+(.+)[ ]+(Save)/mi)[1];
+    var save = text.match(/Save\:[ ]+(.+)\n/mi)[1];
+    var description = text.match(/\nGeneral.*\n(.*)/)[1];
+    
+
+    var macro = "var spellName = '"+spellname+"';\n";
+    macro = macro + "var compendiumName = '"+compendiumName+"';\n";
+    macro = macro + "var level = '"+level+"';\n";
+    macro = macro + "var duration = '"+duration+"';\n";
+    macro = macro + "var castingtime = '"+castingtime+"';\n";
+    macro = macro + "var save = '"+save+"';\n";
+    macro = macro + "var page = '"+page+"';\n";
+    macro = macro + "var description = '"+description+"';\n";
+    macro = macro + "let pack;\n";
+    macro = macro + "let entry;\n";
+    macro = macro + "var tname;\n";
+    macro = macro + "let rollTableList = [];\n";
+    macro = macro + "let spell_template = \"\";\n\n";
+
+    macro = macro + `Hooks.on("createRollTable", async (table, html) => {
+        rollTableList.forEach(async function(sTable) {
+            if(sTable[0] === table.name)
+            {
+                var importedTable = game.packs.get("world.`+compendiumName+`").importEntity(table);
+                sTable[1] = importedTable._id;
+            }
+        });
+    });\n\n`;
+
+
+    macro = `
+    class SpellImporter {
+    constructor() {
+    
+  this.spellName = '`+spellname+`';
+  this.compendiumName = '`+compendiumName+`';
+  this.level = `+level+`;
+  this.duration = '`+duration+`';
+  this.castingtime = '`+castingtime+`';
+  this.save = '`+save+`';
+  this.page = '`+page+`';
+  this.description = '`+description+`';
+  this.range = '`+range+`';
+  this.rollTableList = [];
+  this.spell_template = "";
+  this.hook_id = null;
+  this.isMainSpellGenerated = false;
+  this.isSubTablesDone = false;
+  
+  }
+  
+  async HookUp()
+  {
+      Hooks._hooks.createRollTable = [];
+      this.hook_id = Hooks.on("createRollTable", async (table, html) => {
+            for (var i = 0; i < this.rollTableList.length; i++) 
+            {
+                if(this.rollTableList[i][0] === table.name)
+                {
+             
+                    var importedTable = await game.packs.get("world.`+compendiumName+`").importEntity(table);
+                    this.rollTableList[i][1] = importedTable._id;
+                }
+            }
+            var done = true;
+            for (var x = 0; x < this.rollTableList.length; x++) {
+                if(this.rollTableList[x][1] == null){
+                    done = false;
+                    break;
+                }
+            }
+            if(done){
+                this.isSubTablesDone = done;
+            }
+            if(this.isSubTablesDone && this.isMainSpellGenerated === false){
+                this.CreateMainSpell();
+            }
+      });
+  }
+  
+  async HookOff()
+  {
+      if(this.hook_id != null)
+       Hooks.off(this.hook_id);
+  }
+  
+  async ClearHooks()
+  {
+      
+  }
+
+  async AddSubTable(table)
+ {
+    this.rollTableList.push(table);
+ }
+
+  async GetTemplateInfo() 
+  {
+     
+    var template = \`<h1>\` \+ this.spellName + \`</h1>
+    <p><strong>Level:</strong> \` \+ this.level \+ \`</p>
+    <p><strong>Range:</strong> \` \+ this.range + \`</p>
+    <p><strong>Duration:</strong> \` + this.duration + \`</p>
+    <p><strong>Casting Time:</strong> \` + this.castingtime + \`</p>
+    <p><strong>Save:</strong> \` + this.save + \` </p>
+    <p><strong>Page:</strong> \` + this.page + \` </p>
+    <p><br />\` + this.description + \`</p>\`;
+
+    for (var i = 0; i < this.rollTableList.length; i++) {
+        if(this.rollTableList[i][0] != "`+ spellname +`") {
+            template = template + "<br><br><strong>"+this.rollTableList[i][0]+":</strong> @Compendium[world."+this.compendiumName+"."+this.rollTableList[i][1]+"]{"+this.rollTableList[i][0]+"}";
+        }
+    }
+    return template;
+  }
+
+  async CreateMainSpell() {
+    if(!this.isMainSpellGenerated){  
+        var MainspellTable = ["`+spellname+`", null];
+        this.rollTableList.push(MainspellTable);
+        var info = await this.GetTemplateInfo();
+        `+getCreateMainTableMacro(spellname, "Mainspell", text)+`
+    }
+    this.isMainSpellGenerated = true;
+
+  }
+
+}
+
+let a = new SpellImporter();
+if(game.packs.get("world.`+compendiumName+`") == null)
+{
+    alert("the compendium world.`+compendiumName+` could not be found, aborting." );
+}
+else
+{
+
+a.HookUp();\n\n`
+    
+potentialRollTables.forEach(async function(table) {
+        macro = macro + "var "+table[0]+"Table = [\""+ spellname +" "+ table[0] +"\", null];\n";
+        macro = macro + "a.AddSubTable("+table[0]+"Table);\n\n";
+})
+
+    potentialRollTables.forEach(async function(table) {
+        var list = text.match(table[1]);  
+        if(list[0] != null){
+            list = list[0].replace(table[2],'');
+        }
+        macro = macro +  getCreateTableMacro(spellname +" "+ table[0], "This is the "+table[0]+" table for "+ spellname, list, table[0]);
+        macro = macro +  "\n\n";
+    })
+
+    macro = macro + "}\n"
+
+    $("#txta_macro_output").val("");
+    $("#txta_macro_output").val(macro);
+}
+
+function getCreateTableMacro(spellname, description, txtData, varName)
+{
+    var r = "EasyTable.generateTablePastedData(\`"+spellname+"\`,\`" + description +"\`,\`" + txtData +"\`);";
+    return r;
+}
+
+function getCreateMainTableMacro(spellname, varName, text)
+{
+    var list = text.match(mainSpell[0]);  
+        if(list[0] != null){
+            list = list[0].replace(mainSpell[1],'');
+        }
+    var r = "EasyTable.generateTablePastedData(\`"+spellname+"\`,info,\`" + list +"\`);\n\n";
+    return r;
+}
+
+function GenerateTableIds(rollTableName, compendiumName, varibleNameToSet)
+{
+    return `pack = game.packs.get(\"world.` + compendiumName.trim() + `\");
+    tname = \"`+ rollTableName +`\";
+    game.tables.entities.forEach(element => {
+    if(element.name === tname ){
+        pack.importEntity(element);
+    }
+    });
+    entry = pack.index.find(e => e.name === tname);
+    `+varibleNameToSet+` = entry._id;`;
+}
+
+</script>
+<body>
+    <div style="width: 99.9%;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;margin:4px;">Compendium Name:(this must match a RollTable type compendium that already exists)</div><input type="text" value="dcc-spell-tables" id="txt_compendiumName" style="width: 99.9%;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;margin:4px;">
+    <textarea id="txta_input" style="width: 29%; height: 90%;"></textarea>
+    <input button type="button" id="btn_convert" value="CONVERT >>" style="width: 6%; height: 90%; vertical-align: top;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;">
+    <textarea id="txta_output" style="width: 29%; height: 90%;"></textarea>
+    <input button type="button" id="btn_convert_macro" value="MACRO >>" style="width: 6%; height: 90%; vertical-align: top;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;">
+    <textarea id="txta_macro_output" style="width: 29%; height: 90%;"></textarea>
+</body>
+</html>
