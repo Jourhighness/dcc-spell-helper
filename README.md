@@ -25,4 +25,4 @@ Warning! Spamming the macro will potentially create a lot of RollTables.
 Sometimes the range of the dice is not properly recognized and can result i a table without a range.
 
 ## Future
-Future: Bug fixes & it will create a actual spell-item as well.
+Bug fixes & it will create a actual spell-item as well.
