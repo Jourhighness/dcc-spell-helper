@@ -33,12 +33,13 @@ var output_txt;
                         [/.*[A-Z]*(\(Order \#[0-9]*\))/g,''],
                         [/w*(Page [0-9]*)/g, ''],
                         [/\n/g, ' '],
+                        [/(Misfire\s*N\/A)\s*/g,""], 
                         [/.*[A-Z]*(\(Order \#[0-9]*\))/g,''],
                         [/(Level: [0-9]+)/g, "\n$&"],
                         [/(General)(\W*)([A-Z]*)/g,"\n\n$1\n$3"], 
                         [/(Manifestation Roll [0-9]*d[0-9]*:)/g,"\n\n$1"],
                         [/(Corruption Roll [0-9]*d[0-9]*:)/g,"\n\n$1"], 
-                        [/(Misfire Roll [0-9]*d[0-9]*:)/g,"\n\n$1"], 
+                        [/(Misfire (Roll [0-9]*d[0-9]*:|N\/A))\s*/g,"\n\n$1"], 
                         [/((\.[ ])(1{1}\W+Lost))/g,"$2\n\n$3"], 
                         [/(\.+[ ]+)(([0-9]+-[0-9]+\W+)|([0-9]+\++))/g,"$1\n\n$2"], 
                         [/(\([0-9]+-[0-9]+\))|(\([0-9]+\+*\)+)/g,"\n$1$2"],
@@ -66,12 +67,15 @@ function cleanuptext(text)
         text = text.replace(element[0], element[1]);
     });
 
-    var fistres = text.match(/(\n)(1-*[0-9]* Lost, fail|1-*[0-9]* Failure|1-*[0-9]* Fail)(.+\n[\s\S]*?(?<=\n.*\n\n|$))/gi)[0];
+    var fistres = text.match(/(\n|N\/A )(1-*[0-9]* Lost, fail|1-*[0-9]* Failure|1-*[0-9]* Fail)(.+\n[\s\S]*?(?<=\n.*\n\n|$))/gi)[0];
     if(fistres != null){
         fistres = fistres.replace(/\n/g, '');
         fistres = "\n\n" + fistres + "\n\n";
-        text = text.replace(/(\n)(1-*[0-9]* Lost, fail|1-*[0-9]* Failure|1-*[0-9]* Fail)(.+\n[\s\S]*?(?<=\n.*\n\n|$))/gi, fistres);
+        text = text.replace(/(\n|N\/A )(1-*[0-9]* Lost, fail|1-*[0-9]* Failure|1-*[0-9]* Fail)(.+\n[\s\S]*?(?<=\n.*\n\n|$))/gi, fistres);
     }
+
+    
+
     
     $("#txta_output").val(text);
     
