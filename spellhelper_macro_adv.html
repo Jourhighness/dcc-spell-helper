@@ -23,7 +23,7 @@ let potentialRollTables = [["Manifestation",
               ["Misfire",
               /\nMisfire .+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
               /.*Misfire.*/gi]];
-let mainSpell = [/(\n1 Lost, failure, and worse|\n1 Failure|\n1 Fail).*$/gims,/^\s+|\s+$/g]
+let mainSpell = [/(\n1 Lost, fail|\n1 Failure|\n1 Fail).*$/gims,/^\s+|\s+$/g]
 let macro_output;
 
 var input_txt;
@@ -66,11 +66,11 @@ function cleanuptext(text)
         text = text.replace(element[0], element[1]);
     });
 
-    var fistres = text.match(/(\n)(1 Lost, failure, and worse|\n1 Failure|\n1 Fail)(.+\n[\s\S]*?(?<=\n.*\n\n|$))/gi)[0];
+    var fistres = text.match(/(\n)(1-*[0-9]* Lost, fail|1-*[0-9]* Failure|1-*[0-9]* Fail)(.+\n[\s\S]*?(?<=\n.*\n\n|$))/gi)[0];
     if(fistres != null){
         fistres = fistres.replace(/\n/g, '');
         fistres = "\n\n" + fistres + "\n\n";
-        text = text.replace(/(\n)(1 Lost, failure, and worse|\n1 Failure|\n1 Fail)(.+\n[\s\S]*?(?<=\n.*\n\n|$))/gi, fistres);
+        text = text.replace(/(\n)(1-*[0-9]* Lost, fail|1-*[0-9]* Failure|1-*[0-9]* Fail)(.+\n[\s\S]*?(?<=\n.*\n\n|$))/gi, fistres);
     }
     
     $("#txta_output").val(text);
@@ -233,7 +233,7 @@ potentialRollTables.forEach(async function(table) {
 
     potentialRollTables.forEach(async function(table) {
         var list = text.match(table[1]);  
-        if(list[0] != null){
+        if(list != null){
             list = list[0].replace(table[2],'');
         }
         macro = macro +  getCreateTableMacro(spellname +" "+ table[0], "This is the "+table[0]+" table for "+ spellname, list, table[0]);
