@@ -23,7 +23,7 @@ let potentialRollTables = [["Manifestation",
               ["Misfire",
               /\nMisfire .+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
               /.*Misfire.*/gi]];
-let mainSpell = [/(\n1 Lost, fail|\n1 Failure|\n1 Fail).*$/gims,/^\s+|\s+$/g]
+let mainSpell = [/(1-*[0-9]* Lost, fail|1-*[0-9]* Failure|1-*[0-9]* Fail).*$/gims,/^\s+|\s+$/g]
 let macro_output;
 
 var input_txt;
@@ -227,17 +227,18 @@ else
 a.HookUp();\n\n`
     
 potentialRollTables.forEach(async function(table) {
-        macro = macro + "var "+table[0]+"Table = [\""+ spellname +" "+ table[0] +"\", null];\n";
-        macro = macro + "a.AddSubTable("+table[0]+"Table);\n\n";
+        
 })
 
     potentialRollTables.forEach(async function(table) {
         var list = text.match(table[1]);  
         if(list != null){
             list = list[0].replace(table[2],'');
+            macro = macro + "var "+table[0]+"Table = [\""+ spellname +" "+ table[0] +"\", null];\n";
+            macro = macro + "a.AddSubTable("+table[0]+"Table);\n\n";
+            macro = macro +  getCreateTableMacro(spellname +" "+ table[0], "This is the "+table[0]+" table for "+ spellname, list, table[0]);
+            macro = macro +  "\n\n";
         }
-        macro = macro +  getCreateTableMacro(spellname +" "+ table[0], "This is the "+table[0]+" table for "+ spellname, list, table[0]);
-        macro = macro +  "\n\n";
     })
 
     macro = macro + "}\n"
@@ -255,7 +256,7 @@ function getCreateTableMacro(spellname, description, txtData, varName)
 function getCreateMainTableMacro(spellname, varName, text)
 {
     var list = text.match(mainSpell[0]);  
-        if(list[0] != null){
+        if(list != null){
             list = list[0].replace(mainSpell[1],'');
         }
     var r = "EasyTable.generateTablePastedData(\`"+spellname+"\`,info,\`" + list +"\`);\n\n";
