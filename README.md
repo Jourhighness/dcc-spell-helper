@@ -11,7 +11,7 @@ Requirements: You need to have the EasyTable by Blitz module installed and activ
 3. Convert >> cleans up the text,  double check make sure it looks "nice"
 4. Macro >> Creates a Macro you can copy paste and run in Foundry VTT  by open up one of the macro buttons, paste,  choose script in the dropdown and then click execute.
 
-Expected result: All tables will be created then imported to your compendium as well. The main RollTable description for the spell will receive the nice formatting from Christian Ovseniks guide. With all tables linked.
+Expected result: All RollTbales will be created then imported to your compendium as well. The main RollTable description for the spell will receive the nice formatting from Christian Ovseniks guide. With all tables linked. Then the spell item will be created > imported to your compendium and then linked to your main rolltable. 
 
 
 ## Good to know
@@ -25,4 +25,4 @@ Warning! Spamming the macro will potentially create a lot of RollTables.
 Sometimes the range of the dice is not properly recognized and can result i a table without a range.
 
 ## Future
-Bug fixes & it will create a actual spell-item as well.
+Mainly bug fixes
