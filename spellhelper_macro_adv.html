@@ -4,30 +4,30 @@
 </head>
 <script>
 
-var compendiumName = "dcc-spell-tables";
-var spellname;
-var level;
-var range;
-var duration;
-var castingtime;
-var save;
-var page;
-var description;
-//name, match filter, replace filter
-let potentialRollTables = [["Manifestation",
-                /\nManifestation.+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
-                /.*Manifestation.*/gi], 
-              ["Corruption",
-              /\nCorruption .+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
-              /.*Corruption.*/gi],
-              ["Misfire",
-              /\nMisfire .+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
-              /.*Misfire.*/gi]];
-let mainSpell = [/(1-*[0-9]* Lost, fail|1-*[0-9]* Failure|1-*[0-9]* Fail).*$/gims,/^\s+|\s+$/g]
-let macro_output;
-
-var input_txt;
-var output_txt;
+    var compendiumName = "dcc-spell-tables";
+    var spellCompendiumName = "dcc-spells";
+    var spellname;
+    var level;
+    var range;
+    var duration;
+    var castingtime;
+    var save;
+    var page;
+    var description;
+    //name, match filter, replace filter
+    let potentialRollTables = [["Manifestation",
+                    /\nManifestation.+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
+                    /.*Manifestation.*/gi], 
+                ["Corruption",
+                /\nCorruption .+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
+                /.*Corruption.*/gi],
+                ["Misfire",
+                /\nMisfire .+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
+                /.*Misfire.*/gi]];
+    let mainSpell = [/(1-*[0-9]* Lost, fail|1-*[0-9]* Failure|1-*[0-9]* Fail).*$/gims,/^\s+|\s+$/g]
+    let macro_output;
+    var input_txt;
+    var output_txt;
     
     let regExpTest = [
                         [/.*[A-Z]*(\(Order \#[0-9]*\))/g,''],
@@ -36,7 +36,7 @@ var output_txt;
                         [/(Misfire\s*N\/A)\s*/g,""], 
                         [/.*[A-Z]*(\(Order \#[0-9]*\))/g,''],
                         [/(Level: [0-9]+)/g, "\n$&"],
-                        [/(General)(\W*)([A-Z]*)/g,"\n\n$1\n$3"], 
+                        [/[ ](General)\s*/,"\n\n$1\n"], 
                         [/(Manifestation Roll [0-9]*d[0-9]*:)/g,"\n\n$1"],
                         [/(Corruption Roll [0-9]*d[0-9]*:)/g,"\n\n$1"], 
                         [/(Misfire (Roll [0-9]*d[0-9]*:|N\/A))\s*/g,"\n\n$1"], 
@@ -87,17 +87,19 @@ function generatemacro(text)
     Level: 3 Range: Touch Duration: Instantaneous Casting time: 1 round Save: See below 
     */
     var compendiumName = $("#txt_compendiumName").val().trim();
+    var spellCompendiumName = $("#txt_spellCompendiumName").val().trim();
     var spellname = text.match(/^(.*)$/m)[1].trim();
     var level = text.match(/\nLevel\: ([0-9])+/mi)[1];
     var range = text.match(/Range\:[ ]+(.+)[ ]+(Duration)/mi)[1];
     var duration = text.match(/Duration\:[ ]+(.+)[ ]+(Casting time)/mi)[1];
     var castingtime = text.match(/Casting time\:[ ]+(.+)[ ]+(Save)/mi)[1];
     var save = text.match(/Save\:[ ]+(.+)\n/mi)[1];
-    var description = text.match(/\nGeneral.*\n(.*)/)[1];
+    var description = text.match(/\nGeneral\s*/)[1];
     
 
     var macro = "var spellName = '"+spellname+"';\n";
     macro = macro + "var compendiumName = '"+compendiumName+"';\n";
+    macro = macro + "var spellCompendiumName = '"+spellCompendiumName+"';\n";
     macro = macro + "var level = '"+level+"';\n";
     macro = macro + "var duration = '"+duration+"';\n";
     macro = macro + "var castingtime = '"+castingtime+"';\n";
@@ -120,13 +122,16 @@ function generatemacro(text)
         });
     });\n\n`;
 
-
     macro = `
+    }
+
+
     class SpellImporter {
     constructor() {
     
   this.spellName = '`+spellname+`';
   this.compendiumName = '`+compendiumName+`';
+  this.spellCompendiumName = '`+spellCompendiumName+`';
   this.level = `+level+`;
   this.duration = '`+duration+`';
   this.castingtime = '`+castingtime+`';
@@ -139,7 +144,6 @@ function generatemacro(text)
   this.hook_id = null;
   this.isMainSpellGenerated = false;
   this.isSubTablesDone = false;
-  
   }
   
   async HookUp()
@@ -150,9 +154,15 @@ function generatemacro(text)
             {
                 if(this.rollTableList[i][0] === table.name)
                 {
-             
                     var importedTable = await game.packs.get("world.`+compendiumName+`").importEntity(table);
                     this.rollTableList[i][1] = importedTable._id;
+                    if("`+spellname+`" === table.name)
+                    {
+                        var dccdata = {config : {inheritSpellCheck: true}, results: {collection: "`+compendiumName+`", table: table._id}, castingTime : "`+castingtime+`", duration : "`+duration+`", level : `+level+`};
+                        var itemdata= { name : "`+spellname+`", type : "spell", data : dccdata };
+                        var item = await Item.create(itemdata);
+                        var importedItem = await game.packs.get("world.`+spellCompendiumName+`").importEntity(item);
+                    }
                 }
             }
             var done = true;
@@ -176,11 +186,7 @@ function generatemacro(text)
       if(this.hook_id != null)
        Hooks.off(this.hook_id);
   }
-  
-  async ClearHooks()
-  {
-      
-  }
+
 
   async AddSubTable(table)
  {
@@ -221,9 +227,15 @@ function generatemacro(text)
 }
 
 let a = new SpellImporter();
-if(game.packs.get("world.`+compendiumName+`") == null)
+if(game.packs.get("world.`+compendiumName+`") == null || game.packs.get("world.`+spellCompendiumName+`") == null)
 {
-    alert("the compendium world.`+compendiumName+` could not be found, aborting." );
+    if(game.packs.get("world.`+compendiumName+`") == null){
+        alert("the compendium world.`+compendiumName+` could not be found, aborting." );
+    }
+    else
+    {
+        alert("the compendium world.`+spellCompendiumName+` could not be found, aborting." );
+    }
 }
 else
 {
@@ -278,7 +290,12 @@ function GenerateTableIds(rollTableName, compendiumName, varibleNameToSet)
 
 </script>
 <body>
-    <div style="width: 99.9%;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;margin:4px;">Compendium Name:(this must match a RollTable type compendium that already exists)</div><input type="text" value="dcc-spell-tables" id="txt_compendiumName" style="width: 99.9%;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;margin:4px;">
+    <div style="width: 99.9%;font-family: Verdana, Geneva, Tahoma, sans-serif; font-style: italic;margin:4px;">
+        (this must match a exixting RollTable type compendium and a Item Compendium that you have already created)</div>
+    <div style="width: 99.9%;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;">
+        Compendium for rolltables:<input type="text" value="dcc-spell-tables" id="txt_compendiumName" style="width: 59%%;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;margin:4px;">
+        Compendium for spells(items):<input type="text" value="dcc-spells" id="txt_spellCompendiumName" style="width: 59%%;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;margin:4px;">
+    </div>
     <textarea id="txta_input" style="width: 29%; height: 90%;"></textarea>
     <input button type="button" id="btn_convert" value="CONVERT >>" style="width: 6%; height: 90%; vertical-align: top;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;">
     <textarea id="txta_output" style="width: 29%; height: 90%;"></textarea>
