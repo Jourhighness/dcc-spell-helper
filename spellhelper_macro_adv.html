@@ -94,7 +94,7 @@ function generatemacro(text)
     var duration = text.match(/Duration\:[ ]+(.+)[ ]+(Casting time)/mi)[1];
     var castingtime = text.match(/Casting time\:[ ]+(.+)[ ]+(Save)/mi)[1];
     var save = text.match(/Save\:[ ]+(.+)\n/mi)[1];
-    var description = text.match(/\nGeneral\s*/)[1];
+    var description = text.match(/\nGeneral.*\n(.*)/)[1];
     
 
     var macro = "var spellName = '"+spellname+"';\n";
@@ -158,7 +158,7 @@ function generatemacro(text)
                     this.rollTableList[i][1] = importedTable._id;
                     if("`+spellname+`" === table.name)
                     {
-                        var dccdata = {config : {inheritSpellCheck: true}, results: {collection: "`+compendiumName+`", table: table._id}, castingTime : "`+castingtime+`", duration : "`+duration+`", level : `+level+`};
+                        var dccdata = {config : {inheritSpellCheck: true}, results: {collection: "`+compendiumName+`", table: table._id}, castingTime : "`+castingtime+`", duration : "`+duration+`", level : `+level+`, description: {value:"`+ description +`"}};
                         var itemdata= { name : "`+spellname+`", type : "spell", data : dccdata };
                         var item = await Item.create(itemdata);
                         var importedItem = await game.packs.get("world.`+spellCompendiumName+`").importEntity(item);
