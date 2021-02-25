@@ -25,5 +25,11 @@ Warning! Spamming the macro will potentially create a lot of RollTables.
 
 Sometimes the range of the dice is not properly recognized and can result i a table without a range.
 
+Does not work properly with 
+
+Make Potion
+Sword Magic
+Turn to Stone
+
 ## Future
 Mainly bug fixes
