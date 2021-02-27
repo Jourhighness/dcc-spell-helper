@@ -20,7 +20,7 @@
                     /.*Manifestation.*/gi], 
                 ["Corruption",
                 /\nCorruption .+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
-                /.*Corruption.*/gi],
+                /\n\s*Corruption.*/gi],
                 ["Misfire",
                 /\nMisfire .+\n[\s\S]*?(?<=\n.*\n\n|$)/gi,
                 /.*Misfire.*/gi]];
@@ -293,7 +293,7 @@ function GenerateTableIds(rollTableName, compendiumName, varibleNameToSet)
 </script>
 <body>
     <div style="width: 99.9%;font-family: Verdana, Geneva, Tahoma, sans-serif; font-style: italic;margin:4px;">
-        (this must match a exixting RollTable type compendium and a Item Compendium that you have already created)</div>
+        (this must match a existing RollTable type compendium and a Item Compendium that you have already created)</div>
     <div style="width: 99.9%;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;">
         Compendium for rolltables:<input type="text" value="dcc-spell-tables" id="txt_compendiumName" style="width: 59%%;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;margin:4px;">
         Compendium for spells(items):<input type="text" value="dcc-spells" id="txt_spellCompendiumName" style="width: 59%%;font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: bold;margin:4px;">
