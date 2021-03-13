@@ -263,7 +263,7 @@ a.HookUp();\n\n`
 
 function getCreateTableMacro(spellname, description, txtData, varName)
 {
-    var r = "EasyTable.generateTablePastedData(\`"+spellname+"\`,\`" + description +"\`,\`" + txtData +"\`);";
+    var r = "EasyTable.generateTablePastedData(\`"+spellname+"\`,\`" + description +"\`,\`" + txtData +"\`, true);";
     return r;
 }
 
@@ -273,7 +273,7 @@ function getCreateMainTableMacro(spellname, varName, text)
         if(list != null){
             list = list[0].replace(mainSpell[1],'');
         }
-    var r = "EasyTable.generateTablePastedData(\`"+spellname+"\`,info,\`" + list +"\`);\n\n";
+    var r = "EasyTable.generateTablePastedData(\`"+spellname+"\`,info,\`" + list +"\`, true);\n\n";
     return r;
 }
 
